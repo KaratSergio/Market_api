@@ -6,6 +6,7 @@ export interface User {
   phone: string | null;
   avatar: string | null;
   role: 'USER' | 'ADMIN' | 'MODERATOR';
+  refreshToken: string;
   createdAt: Date;
   updatedAt: Date;
 }

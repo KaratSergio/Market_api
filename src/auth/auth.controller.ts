@@ -1,28 +1,84 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Res,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Response } from 'express';
+import { RequestWithUser } from '@common/interfaces/request.interface';
 import { LocalAuthGuard } from './jwt/local-auth.guard';
+import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 
-@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOperation({ summary: 'User registration' })
-  @ApiResponse({ status: 201, description: 'User registered' })
-  @ApiResponse({ status: 400, description: 'Registration error' })
-  @Post('register')
-  async register(@Body() body: { email: string; password: string }) {
-    return this.authService.register(body.email, body.password);
-  }
-
-  @ApiOperation({ summary: 'User login' })
-  @ApiResponse({ status: 200, description: 'Successful login' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    const user = await this.authService.validateUser(body.email, body.password);
-    return this.authService.login(user);
+  async login(@Req() req: RequestWithUser, @Res() res: Response) {
+    const { accessToken, refreshToken, user } = await this.authService.login(
+      req.user,
+    );
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/auth/refresh',
+    });
+
+    return res.json({ accessToken, user });
+  }
+
+  @Post('register')
+  async register(@Body() body, @Res() res: Response) {
+    const { name, email, password } = body;
+    const { accessToken, refreshToken, user } = await this.authService.register(
+      name,
+      email,
+      password,
+    );
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/auth/refresh',
+    });
+
+    return res.json({ accessToken, user });
+  }
+
+  @Post('refresh')
+  async refresh(@Req() req: RequestWithUser, @Res() res: Response) {
+    const refreshToken = req.cookies['refresh_token'];
+    if (!refreshToken) throw new UnauthorizedException('No refresh token');
+
+    const {
+      accessToken,
+      refreshToken: newRefreshToken,
+      user,
+    } = await this.authService.refreshToken(refreshToken);
+
+    res.cookie('refresh_token', newRefreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/auth/refresh',
+    });
+
+    return res.json({ accessToken, user });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@Req() req: RequestWithUser, @Res() res: Response) {
+    await this.authService.logout(req.user.id);
+    res.clearCookie('refresh_token', { path: '/auth/refresh' });
+    return res.json({ message: 'Logged out' });
   }
 }

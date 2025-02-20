@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { RequestWithUser } from '@common/interfaces/request.interface';
 import { ROLES_KEY } from '@common/decorators/roles.decorator';
-import { JwtUserPayload } from '@common/interfaces/jwt-payload.interface';
+import { User } from '@common/interfaces/user.interface';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -33,7 +33,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     try {
-      const payload = this.jwtService.verify<JwtUserPayload>(token, {
+      const payload = this.jwtService.verify<User>(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 
@@ -41,14 +41,14 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid JWT payload');
       }
 
-      request.jwt = payload;
+      request.user = payload;
 
       const requiredRoles = this.reflector.get<string[]>(
         ROLES_KEY,
         context.getHandler(),
       );
 
-      if (requiredRoles?.length && !requiredRoles.includes(request.jwt.role)) {
+      if (requiredRoles?.length && !requiredRoles.includes(request.user.role)) {
         throw new ForbiddenException('Insufficient permissions');
       }
 

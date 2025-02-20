@@ -32,7 +32,7 @@ export class AdsController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Request() req: RequestWithUser, @Body() createAdDto: CreateAdDto) {
-    return this.adsService.create(req.jwt.id, createAdDto);
+    return this.adsService.create(req.user.id, createAdDto);
   }
 
   @ApiOperation({ summary: 'Get all ads' })
@@ -61,7 +61,7 @@ export class AdsController {
     @Param('id') id: string,
     @Body() UpdateAdDto: UpdateAdDto,
   ) {
-    return this.adsService.update(id, req.jwt.id, UpdateAdDto);
+    return this.adsService.update(id, req.user.id, UpdateAdDto);
   }
 
   @ApiBearerAuth()
@@ -71,6 +71,6 @@ export class AdsController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.adsService.remove(id, req.jwt.id);
+    return this.adsService.remove(id, req.user.id);
   }
 }
