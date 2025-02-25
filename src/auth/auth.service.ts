@@ -20,11 +20,15 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { id: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1m' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     const hashedRefreshToken = await argon2.hash(refreshToken);
-    await this.authRepository.saveRefreshToken(user.id, hashedRefreshToken);
+    await this.authRepository.saveRefreshToken(
+      user.id,
+      user.email,
+      hashedRefreshToken,
+    );
 
     const userData = {
       id: user.id,
@@ -53,22 +57,50 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const decoded = this.jwtService.verify(refreshToken);
+      const decoded = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_SECRET,
+      });
+
       const user = await this.authRepository.findUserById(decoded.id);
+      if (!user) throw new UnauthorizedException('User not found');
 
-      if (!user || !user.refreshToken)
-        throw new UnauthorizedException('Invalid token');
-
-      const isValid = await argon2.verify(user.refreshToken, refreshToken);
-      if (!isValid) throw new UnauthorizedException('Invalid token');
-
-      if (decoded.exp < Date.now() / 1000) {
-        throw new UnauthorizedException('Token has expired');
+      const tokenRecord = await this.authRepository.findTokenByUserId(user.id);
+      if (!tokenRecord) {
+        throw new UnauthorizedException('Invalid refresh token');
       }
 
-      return this.login(user);
+      const isValidToken = await argon2.verify(tokenRecord.token, refreshToken);
+      if (!isValidToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      if (new Date(tokenRecord.expiresAt) < new Date()) {
+        throw new UnauthorizedException('Refresh token has expired');
+      }
+
+      const newAccessToken = this.jwtService.sign(
+        { id: user.id, email: user.email, role: user.role },
+        { expiresIn: '1h' },
+      );
+      const newRefreshToken = this.jwtService.sign(
+        { id: user.id, email: user.email, role: user.role },
+        { expiresIn: '7d' },
+      );
+
+      const hashedNewRefreshToken = await argon2.hash(newRefreshToken);
+      await this.authRepository.saveRefreshToken(
+        user.id,
+        user.email,
+        hashedNewRefreshToken,
+      );
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user,
+      };
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 

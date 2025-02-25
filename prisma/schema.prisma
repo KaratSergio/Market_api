@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,22 +8,53 @@ datasource db {
 }
 
 model User {
-  id               String     @id @default(uuid())
-  email            String     @unique
-  password         String
-  name             String?
-  phone            String?
-  avatar           String?
-  role             Role       @default(USER)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  refreshToken     String?
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  phone     String?
+  avatar    String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  authProviders    AuthProvider[]
+  sessionTokens    SessionToken[]
   ads              Ad[]
   comments         Comment[]
   favorites        Favorite[]
-  messagesSent     Message[]  @relation("SentMessages")
-  messagesReceived Message[]  @relation("ReceivedMessages")
-  Payment          Payment[]
+  messagesSent     Message[]      @relation("SentMessages")
+  messagesReceived Message[]      @relation("ReceivedMessages")
+  payments         Payment[]
+  tokens           Token[] // Link to Tokens for verification and 2FA
+
+  @@map("users")
+}
+
+model AuthProvider {
+  id           String  @id @default(uuid())
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  provider     String // 'google', 'github', 'telegram'
+  providerId   String  @unique // ID user in OAuth-system
+  secret       String? // secret key 2FA
+  is2FAEnabled Boolean @default(false)
+
+  @@map("auth_providers")
+}
+
+model SessionToken {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  token     String   @unique
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("session_tokens")
 }
 
 enum Role {
@@ -38,14 +64,17 @@ enum Role {
 }
 
 model Category {
-  id            String     @id @default(uuid())
-  name          String
-  parentId      String?
-  parent        Category?  @relation("CategoryParent", fields: [parentId], references: [id])
-  subcategories Category[] @relation("CategoryParent")
-  ads           Ad[]       @relation("AdToCategory")
-  subAds        Ad[]       @relation("AdToSubcategory")
-  createdAt     DateTime   @default(now())
+  id        String     @id @default(uuid())
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  ads       Ad[]       @relation("AdToCategory")
+  subAds    Ad[]       @relation("AdToSubcategory")
+  path      Json? // JSON-array with category hierarchy
+  createdAt DateTime   @default(now())
+
+  @@map("categories")
 }
 
 model Ad {
@@ -67,7 +96,9 @@ model Ad {
   images        AdImage[]
   comments      Comment[]
   favorites     Favorite[]
-  Payment       Payment[]
+  payments      Payment[]
+
+  @@map("ads")
 }
 
 enum AdStatus {
@@ -82,6 +113,8 @@ model AdImage {
   url  String
   ad   Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
   adId String
+
+  @@map("ad_images")
 }
 
 model Favorite {
@@ -90,6 +123,8 @@ model Favorite {
   userId String
   ad     Ad     @relation(fields: [adId], references: [id], onDelete: Cascade)
   adId   String
+
+  @@map("favorites")
 }
 
 model Comment {
@@ -100,6 +135,8 @@ model Comment {
   adId      String
   text      String
   createdAt DateTime @default(now())
+
+  @@map("comments")
 }
 
 model Message {
@@ -110,6 +147,8 @@ model Message {
   receiverId String
   text       String
   createdAt  DateTime @default(now())
+
+  @@map("messages")
 }
 
 model Payment {
@@ -121,10 +160,34 @@ model Payment {
   amount    Decimal
   status    PaymentStatus @default(PENDING)
   createdAt DateTime      @default(now())
+
+  @@map("payments")
 }
 
 enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  email     String
+  token     String    @unique
+  type      TokenType
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Foreign key to User for verification or reset requests
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+}
+
+enum TokenType {
+  REFRESH
+  VERIFICATION
+  TWO_FACTOR
+  PASSWORD_RESET
 }

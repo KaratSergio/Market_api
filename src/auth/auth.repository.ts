@@ -33,22 +33,38 @@ export class AuthRepository {
         email: true,
         password: true,
         role: true,
-        refreshToken: true,
       },
     });
   }
 
-  async saveRefreshToken(userId: string, hashedToken: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: hashedToken },
+  async saveRefreshToken(
+    userId: string,
+    email: string,
+    hashedToken: string,
+  ): Promise<void> {
+    await this.prisma.token.create({
+      data: {
+        userId,
+        email,
+        token: hashedToken,
+        type: 'REFRESH',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
     });
   }
 
   async clearRefreshToken(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: null },
+    await this.prisma.token.deleteMany({
+      where: { userId },
+    });
+  }
+
+  async findTokenByUserId(userId: string) {
+    return this.prisma.token.findFirst({
+      where: {
+        userId,
+      },
     });
   }
 }
