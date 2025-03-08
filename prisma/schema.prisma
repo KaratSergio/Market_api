@@ -71,7 +71,8 @@ model Category {
   children  Category[] @relation("CategoryHierarchy")
   ads       Ad[]       @relation("AdToCategory")
   subAds    Ad[]       @relation("AdToSubcategory")
-  path      Json? // JSON-array with category hierarchy
+  idPath    Json? // JSON-array with category id
+  namePath  Json? // JSON-array with category names
   createdAt DateTime   @default(now())
 
   @@map("categories")
@@ -84,9 +85,9 @@ model Ad {
   price         Decimal
   user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String
-  category      Category   @relation("AdToCategory", fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId    String
-  subcategory   Category?  @relation("AdToSubcategory", fields: [subcategoryId], references: [id], onDelete: Cascade)
+  category      Category?  @relation("AdToCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId    String?
+  subcategory   Category?  @relation("AdToSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
   subcategoryId String?
   status        AdStatus   @default(PENDING)
   location      String?

@@ -24,23 +24,41 @@ export class AdsService {
         },
       },
       include: {
-        category: true,
-        subcategory: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        subcategory: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
   }
 
   async findAll() {
     return this.prisma.ad.findMany({
-      where: { status: 'ACTIVE' },
-      include: { user: { select: { id: true, name: true } } },
+      where: { status: 'PENDING' },
+      include: {
+        user: { select: { id: true, name: true } },
+        category: { select: { name: true } },
+        subcategory: { select: { name: true } },
+      },
     });
   }
 
   async findOne(id: string) {
     return this.prisma.ad.findUnique({
       where: { id },
-      include: { user: { select: { id: true, name: true } } },
+      include: {
+        user: { select: { id: true, name: true } },
+        category: { select: { name: true } },
+        subcategory: { select: { name: true } },
+      },
     });
   }
 

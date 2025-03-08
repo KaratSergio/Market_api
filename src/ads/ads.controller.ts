@@ -22,7 +22,7 @@ import { UpdateAdDto } from './dto/update-ad.dto';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 
 @ApiTags('Announcements')
-@Controller('ads')
+@Controller('ad')
 export class AdsController {
   constructor(private readonly adsService: AdsService) {}
 
@@ -37,7 +37,7 @@ export class AdsController {
 
   @ApiOperation({ summary: 'Get all ads' })
   @ApiResponse({ status: 200, description: 'Returns a list of ads' })
-  @Get()
+  @Get('list')
   findAll() {
     return this.adsService.findAll();
   }
