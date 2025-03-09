@@ -6,22 +6,11 @@ import {
   IsDecimal,
   IsArray,
   ArrayMinSize,
-  IsObject,
 } from 'class-validator';
-
-class ImageDto {
-  @ApiProperty({
-    description: 'The URL of the image.',
-    example: 'https://example.com/image.jpg',
-  })
-  @IsString()
-  @IsNotEmpty()
-  url: string;
-}
 
 export class CreateAdDto {
   @ApiProperty({
-    description: 'The title of the advertisement.',
+    description: 'Title of the ad.',
     example: 'Brand new Laptop for sale',
   })
   @IsString()
@@ -29,7 +18,7 @@ export class CreateAdDto {
   title: string;
 
   @ApiProperty({
-    description: 'The description of the advertisement.',
+    description: 'Description of the ad.',
     example: 'This laptop is brand new and in perfect condition.',
   })
   @IsString()
@@ -37,15 +26,15 @@ export class CreateAdDto {
   description: string;
 
   @ApiProperty({
-    description: 'The price of the advertisement in decimal format.',
+    description: 'Price of the item.',
     example: '599.99',
   })
   @IsDecimal()
   @IsNotEmpty()
-  price: string;
+  price: number;
 
   @ApiProperty({
-    description: 'The category ID for the advertisement.',
+    description: 'Category ID of the ad.',
     example: 'electronics',
   })
   @IsString()
@@ -53,7 +42,7 @@ export class CreateAdDto {
   categoryId: string;
 
   @ApiProperty({
-    description: 'The subcategory ID for the advertisement.',
+    description: 'Subcategory ID of the ad.',
     example: 'laptops',
   })
   @IsString()
@@ -61,7 +50,7 @@ export class CreateAdDto {
   subcategoryId: string;
 
   @ApiProperty({
-    description: 'The location of the advertisement (optional).',
+    description: 'Location of the ad (optional).',
     example: 'New York',
     required: false,
   })
@@ -70,14 +59,12 @@ export class CreateAdDto {
   location?: string;
 
   @ApiProperty({
-    description: 'A list of images associated with the advertisement.',
-    type: [ImageDto],
+    description: 'List of images uploaded for the ad.',
+    type: [String],
     required: false,
-    example: [{ url: 'https://example.com/image1.jpg' }],
   })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
-  @IsObject({ each: true })
-  images?: ImageDto[];
+  images?: string[];
 }

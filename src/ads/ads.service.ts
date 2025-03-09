@@ -2,13 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class AdsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
-  async create(userId: string, createAdDto: CreateAdDto) {
-    return await this.prisma.ad.create({
+  async create(
+    userId: string,
+    createAdDto: CreateAdDto,
+    files: Express.Multer.File[],
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const ad = await this.prisma.ad.create({
       data: {
         userId,
         title: createAdDto.title,
@@ -17,25 +30,26 @@ export class AdsService {
         categoryId: createAdDto.categoryId,
         subcategoryId: createAdDto.subcategoryId,
         location: createAdDto.location,
+      },
+    });
+
+    let imageUrls: string[] = [];
+    if (files.length > 0) {
+      const folderName = `ads/${userId}/${ad.id}`;
+      imageUrls = await this.cloudinaryService.uploadImages(files, folderName);
+    }
+
+    const uploadedImages = imageUrls.map((url) => ({ url }));
+    return this.prisma.ad.update({
+      where: { id: ad.id },
+      data: {
         images: {
-          create: createAdDto.images.map((image) => ({
-            url: image.url,
-          })),
+          create: uploadedImages,
         },
       },
       include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        subcategory: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        category: { select: { id: true, name: true } },
+        subcategory: { select: { id: true, name: true } },
       },
     });
   }
