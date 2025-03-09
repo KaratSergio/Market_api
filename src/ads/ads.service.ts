@@ -58,7 +58,7 @@ export class AdsService {
     return this.prisma.ad.findMany({
       where: { status: 'PENDING' },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { name: true } },
         category: { select: { name: true } },
         subcategory: { select: { name: true } },
       },
@@ -69,9 +69,11 @@ export class AdsService {
     return this.prisma.ad.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { name: true } },
         category: { select: { name: true } },
         subcategory: { select: { name: true } },
+        comments: { select: { text: true } },
+        images: { select: { url: true } },
       },
     });
   }
