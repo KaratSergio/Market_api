@@ -15,7 +15,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('MARKET_API Documentation')
-    .setDescription('https there')
+    .setDescription('https://market-api-1qb3.onrender.com/')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
