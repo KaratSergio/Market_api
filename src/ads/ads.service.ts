@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -79,21 +80,36 @@ export class AdsService {
   }
 
   async update(id: string, userId: string, dto: UpdateAdDto) {
-    return this.prisma.ad.updateMany({
-      where: { id, userId },
-      data: dto,
+    const ad = await this.prisma.ad.findUnique({
+      where: { id },
     });
+
+    if (!ad) {
+      throw new Error('Ad not found');
+    }
+
+    const updatedAd = await this.prisma.ad.update({
+      where: { id },
+      data: dto as Prisma.AdUpdateInput,
+    });
+
+    return updatedAd;
   }
 
   async remove(id: string, userId: string) {
-    const deletedAd = await this.prisma.ad.deleteMany({
-      where: { id, userId },
+    const ad = await this.prisma.ad.findUnique({
+      where: { id },
+      select: { userId: true },
     });
 
-    if (!deletedAd.count) {
-      throw new Error('Ad not found or not owned by the user');
+    if (!ad) {
+      throw new Error('Ad not found');
     }
 
-    return deletedAd;
+    if (ad.userId !== userId) {
+      throw new Error('Ad not owned by the user');
+    }
+
+    return this.prisma.ad.delete({ where: { id } });
   }
 }
