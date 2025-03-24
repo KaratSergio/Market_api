@@ -62,6 +62,7 @@ export class AdsService {
         user: { select: { name: true } },
         category: { select: { name: true } },
         subcategory: { select: { name: true } },
+        images: { select: { url: true } },
       },
     });
   }
