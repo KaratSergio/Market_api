@@ -24,6 +24,9 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   app.use(cookieParser());
-  await app.listen(5050);
+
+  const port = process.env.PORT || 5050;
+  await app.listen(port);
+  console.log(`🚀 Server running on port ${port}`);
 }
 bootstrap();
