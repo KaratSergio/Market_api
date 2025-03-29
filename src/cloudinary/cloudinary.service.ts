@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class CloudinaryService {
+  // Method to upload images
   async uploadImages(
     files: Express.Multer.File[],
     folderName: string,
@@ -31,9 +32,38 @@ export class CloudinaryService {
     return uploadedUrls;
   }
 
-  async deleteFile(publicId: string): Promise<void> {
-    await cloudinary.uploader.destroy(publicId, {
+  // Method to delete image
+  async deleteFile(publicId: string): Promise<UploadApiResponse> {
+    const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: 'image',
     });
+    return result;
+  }
+
+  // Method to delete all images in a folder
+  async deleteAllImagesInFolder(folderName: string): Promise<void> {
+    try {
+      // Get a list of all images in the folder
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: folderName,
+        max_results: 500,
+      });
+
+      if (result.resources.length > 0) {
+        // Delete all images
+        for (const resource of result.resources) {
+          const publicId = resource.public_id;
+          const deleteResult = await cloudinary.uploader.destroy(publicId, {
+            resource_type: 'image',
+          });
+          console.log(`Removed image with publicId: ${publicId}`, deleteResult);
+        }
+      } else {
+        console.log(`There are no images to delete in ${folderName}`);
+      }
+    } catch (error) {
+      console.error('Error deleting images from folder:', error);
+    }
   }
 }
