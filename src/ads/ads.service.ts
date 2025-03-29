@@ -54,7 +54,7 @@ export class AdsService {
       },
     });
 
-    return { message: 'Ad created successfully', ad: updatedAd };
+    return updatedAd;
   }
 
   async findAll() {
@@ -68,7 +68,7 @@ export class AdsService {
       },
     });
 
-    return { message: 'Ads fetched successfully', ads };
+    return ads;
   }
 
   async findOne(id: string) {
@@ -87,7 +87,7 @@ export class AdsService {
       throw new Error('Ad not found');
     }
 
-    return { message: 'Ad fetched successfully', ad };
+    return ad;
   }
 
   async update(id: string, userId: string, dto: UpdateAdDto) {
@@ -108,7 +108,7 @@ export class AdsService {
       data: dto as Prisma.AdUpdateInput,
     });
 
-    return { message: 'Ad updated successfully', updatedAd };
+    return updatedAd;
   }
 
   async remove(id: string, userId: string) {
