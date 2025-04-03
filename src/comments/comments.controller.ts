@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   Param,
   Request,
@@ -43,5 +45,38 @@ export class CommentsController {
   ) {
     const userId = req.user.id;
     return this.commentsService.create(adId, userId, createCommentDto.text);
+  }
+
+  // UPDATE COMMENT
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a comment' })
+  @ApiResponse({ status: 200, description: 'Comment updated successfully' })
+  @UseGuards(JwtAuthGuard)
+  @Patch('comments/:commentId')
+  async updateComment(
+    @Request() req: any,
+    @Param('commentId') commentId: string,
+    @Body() updateCommentDto: any,
+  ) {
+    const userId = req.user.id;
+    return this.commentsService.update(
+      commentId,
+      userId,
+      updateCommentDto.text,
+    );
+  }
+
+  // DELETE COMMENT
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a comment' })
+  @ApiResponse({ status: 200, description: 'Comment deleted successfully' })
+  @UseGuards(JwtAuthGuard)
+  @Delete('comments/:commentId')
+  async deleteComment(
+    @Request() req: any,
+    @Param('commentId') commentId: string,
+  ) {
+    const userId = req.user.id;
+    return this.commentsService.delete(commentId, userId);
   }
 }

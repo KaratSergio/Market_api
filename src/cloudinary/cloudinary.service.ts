@@ -3,7 +3,7 @@ import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class CloudinaryService {
-  // Method to upload images
+  // UPLOAD IMAGES
   async uploadImages(
     files: Express.Multer.File[],
     folderName: string,
@@ -32,7 +32,7 @@ export class CloudinaryService {
     return uploadedUrls;
   }
 
-  // Method to delete image
+  // DELETE IMAGES
   async deleteFile(publicId: string): Promise<UploadApiResponse> {
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: 'image',

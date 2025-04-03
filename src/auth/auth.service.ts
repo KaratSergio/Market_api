@@ -10,6 +10,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  // VALIDATE USER
   async validateUser(email: string, pass: string) {
     const user = await this.authRepository.findUserByEmail(email);
     if (user && (await argon2.verify(user.password, pass))) {
@@ -18,6 +19,7 @@ export class AuthService {
     return null;
   }
 
+  // LOGIN
   async login(user: any) {
     const payload = { id: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -40,6 +42,7 @@ export class AuthService {
     return { accessToken, refreshToken, user: userData };
   }
 
+  // REGISTER
   async register(name: string, email: string, password: string) {
     if (await this.authRepository.findUserByEmail(email)) {
       throw new Error('User already exists');
@@ -55,6 +58,7 @@ export class AuthService {
     return this.login(newUser);
   }
 
+  // REFRESH TOKEN
   async refreshToken(refreshToken: string) {
     try {
       const decoded = this.jwtService.verify(refreshToken, {
@@ -104,6 +108,7 @@ export class AuthService {
     }
   }
 
+  // LOGOUT
   async logout(userId: string) {
     await this.authRepository.clearRefreshToken(userId);
   }

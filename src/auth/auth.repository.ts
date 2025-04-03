@@ -6,10 +6,12 @@ import { User } from '@prisma/client';
 export class AuthRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // FIND USER BY EMAIL
   async findUserByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
+  // CREATE USER
   async createUser(
     name: string,
     email: string,
@@ -25,6 +27,7 @@ export class AuthRepository {
     });
   }
 
+  // FIND USER BY ID
   async findUserById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -37,6 +40,7 @@ export class AuthRepository {
     });
   }
 
+  // SAVE REFRESH TOKEN
   async saveRefreshToken(
     userId: string,
     email: string,
@@ -54,12 +58,14 @@ export class AuthRepository {
     });
   }
 
+  // CLEAR REFRESH TOKEN
   async clearRefreshToken(userId: string): Promise<void> {
     await this.prisma.token.deleteMany({
       where: { userId },
     });
   }
 
+  // FIND TOKEN BY USER ID
   async findTokenByUserId(userId: string) {
     return this.prisma.token.findFirst({
       where: {

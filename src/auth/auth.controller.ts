@@ -21,6 +21,7 @@ import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // LOGIN
   @UseGuards(LocalAuthGuard)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({
@@ -48,6 +49,7 @@ export class AuthController {
     return res.json({ accessToken, user });
   }
 
+  // REGISTER
   @ApiOperation({ summary: 'Register new user' })
   @ApiResponse({
     status: 201,
@@ -73,6 +75,7 @@ export class AuthController {
     return res.json({ accessToken, user });
   }
 
+  // REFRESH TOKEN
   @ApiOperation({ summary: 'Refresh user access token' })
   @ApiResponse({
     status: 200,
@@ -100,6 +103,7 @@ export class AuthController {
     return res.json({ accessToken, user });
   }
 
+  // LOGOUT
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Successfully logged out' })

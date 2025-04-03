@@ -14,6 +14,7 @@ export class UsersService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
+  // GET USER DATA
   async getUserById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -27,6 +28,7 @@ export class UsersService {
     return user;
   }
 
+  // UPDATE USER DATA
   async updateUser(
     id: string,
     data: any,
@@ -72,6 +74,7 @@ export class UsersService {
     });
   }
 
+  // DELETE USER
   async deleteUser(id: string, currentUser: any) {
     if (id !== currentUser.id && currentUser.role !== 'ADMIN') {
       throw new ForbiddenException('You can only delete your own account');
